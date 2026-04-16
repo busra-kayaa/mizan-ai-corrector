@@ -57,7 +57,7 @@ Proje `backend` ve `frontend` olmak üzere iki ana modülden oluşmaktadır. Ça
 Aşağıdaki komutu terminalinize yapıştırarak projeyi bilgisayarınıza indirin:
 
 ```bash
-git clone [https://github.com/busra-kayaa/mizan-ai-corrector.git](https://github.com/busra-kayaa/mizan-ai-corrector.git)
+git clone https://github.com/busra-kayaa/mizan-ai-corrector.git
 cd mizan-ai-corrector
 ```
 
