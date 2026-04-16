@@ -36,6 +36,7 @@
 * **🔒 %100 Yerel & Güvenli:** Veriler hiçbir bulut servisine çıkmaz. Model tamamen yerel (Local) sunucuda koşar.
 * **📂 Toplu Dosya Analizi (Batch Processing):** `.txt`, `.md`, `.docx`, `.pdf`, `.csv` ve `.srt` dosyalarını sürükle-bırak yöntemiyle asenkron olarak işler.
 * **🛡️ Enterprise-Grade Güvenlik:** Katı CORS politikaları, IP tabanlı Rate-Limiting ve detaylı HTTP Hata Yönetimi.
+* **🔄 Sürekli Öğrenme ve Geri Bildirim (RLHF Altyapısı):** Analiz sonuçları için entegre edilmiş geri bildirim modülü sayesinde, modelin hatalı düzeltmelerini raporlama ve gelecekteki fine-tuning süreçleri için veri toplama imkanı.
 
 ### 🎯 7 Katmanlı Hata Sınıflandırması
 Sistem, tespit ettiği hataları sadece "düzeltildi" deyip geçmez, atomik olarak sınıflandırır:
@@ -85,7 +86,7 @@ GitHub dosya boyutu sınırları nedeniyle devasa LLM modeli repoya dahil edilme
 1. Mizan için özel olarak hazırlanan modeli indirmek üzere aşağıdaki Hugging Face reposuna gidin:
    🔗 **[📥 Busra06/Mizan-V4-Llama3.1-GGUF](https://huggingface.co/Busra06/Mizan-V4-Llama3.1-GGUF)**
 2. Açılan sayfada **"Files and versions"** sekmesine tıklayın ve oradaki `.gguf` uzantılı modeli bilgisayarınıza indirin.
-3. İndirdiğiniz dosyayı projedeki `backend/models/` klasörünün içine yerleştirin.
+3. İndirdiğiniz dosyayı projedeki `backend/models/` klasörünün içine yerleştirin. *(Not: Eğer models klasörü boş görünüyorsa, modeli doğrudan bu dizine taşıyın).*
 4. Dosya adının tam olarak `Meta-Llama-3.1-8B.Q4_K_M.gguf` olduğundan emin olun.
 
 ### 3. Backend'i Başlatın
@@ -109,6 +110,13 @@ Yeni bir terminal sekmesi açın ve arayüzü başlatmak için şu komutları gi
 ```bash
 cd frontend
 npm install
+```
+
+**⚠️ Önemli: Çevre Değişkenlerini (.env) Ayarlayın**
+Projeyi çalıştırmadan önce `frontend` dizininde bulunan `.env.example` dosyasının adını `.env` olarak değiştirin (veya yeni bir `.env` dosyası oluşturup `.env.example` içindeki anahtarları kopyalayın). 
+
+Ardından sunucuyu ayağa kaldırın:
+```bash
 npm run dev
 ```
 
@@ -236,7 +244,7 @@ MIZAN-AI-CORRECTOR/
 │   │   │   └── routes.tsx
 │   │   ├── App.tsx
 │   │   └── main.tsx
-│   ├── .env               # Ortam değişkenleri
+│   ├── .env.example       # Ortam değişkenleri şablonu
 │   ├── index.html
 │   ├── package-lock.json
 │   ├── package.json
