@@ -12,13 +12,31 @@
 
 ---
 
+## 📸 Arayüz & Dokümantasyon
+
+### 1. Detaylı ve Atomik Analiz (Dark Mode)
+![Mizan Analiz Sonucu](https://github.com/user-attachments/assets/7d3ed13c-e286-45f5-b033-0468990478c4)
+> *Llama 3.1 ve Regex motorunun tespit ettiği hataların kategorize edilmiş, detaylı görünümü.*
+
+### 2. Gömülü API Referansı (Light Mode)
+![Mizan API Dokümantasyonu](https://github.com/user-attachments/assets/cd6b16cc-63c9-4c38-a4e5-2f06576a3482)
+> *Geliştiriciler için doğrudan arayüze entegre edilmiş, modern REST API ve HTTP Durum Kodları dokümantasyonu.*
+
+### 3. Kullanıcı Geri Bildirim Sistemi
+![Mizan Geri Bildirim](https://github.com/user-attachments/assets/914a2b66-7500-48a7-be5a-b72236c23e70)
+> *Yapay zeka modelini sürekli iyileştirmek (RLHF) için tasarlanmış detaylı geri bildirim mekanizması.*
+
+---
+
 ## ✨ Öne Çıkan Özellikler
 
 * **🚀 Hibrit Motor (Regex + LLM):** Kural tabanlı katman ile milisaniyelik ön temizlik yapar, ardından Llama-3.1-8B modeli ile derin bağlamsal analiz gerçekleştirir.
 * **🧩 Atomik Düzeltme & Sınıflandırma:** Hataları bütünsel olarak değil; *Dilbilgisi, Terminoloji, Tipografi, Türkçe Karakter (Deascii)* gibi farklı kategorilerde atomik olarak parçalar ve raporlar.
+* **📖 Gömülü (Built-in) API Dokümantasyonu:** Harici bir araca gerek kalmadan, doğrudan React arayüzü üzerinden erişilebilen kapsamlı geliştirici dokümantasyonu.
 * **🔒 %100 Yerel & Güvenli:** Veriler hiçbir bulut servisine çıkmaz. Model tamamen yerel (Local) sunucuda koşar.
 * **📂 Toplu Dosya Analizi (Batch Processing):** `.txt`, `.md`, `.docx`, `.pdf`, `.csv` ve `.srt` dosyalarını sürükle-bırak yöntemiyle asenkron olarak işler.
 * **🛡️ Enterprise-Grade Güvenlik:** Katı CORS politikaları, IP tabanlı Rate-Limiting ve detaylı HTTP Hata Yönetimi.
+* **🔄 Sürekli Öğrenme ve Geri Bildirim (RLHF Altyapısı):** Analiz sonuçları için entegre edilmiş geri bildirim modülü sayesinde, modelin hatalı düzeltmelerini raporlama ve gelecekteki fine-tuning süreçleri için veri toplama imkanı.
 
 ### 🎯 7 Katmanlı Hata Sınıflandırması
 Sistem, tespit ettiği hataları sadece "düzeltildi" deyip geçmez, atomik olarak sınıflandırır:
@@ -68,7 +86,7 @@ GitHub dosya boyutu sınırları nedeniyle devasa LLM modeli repoya dahil edilme
 1. Mizan için özel olarak hazırlanan modeli indirmek üzere aşağıdaki Hugging Face reposuna gidin:
    🔗 **[📥 Busra06/Mizan-V4-Llama3.1-GGUF](https://huggingface.co/Busra06/Mizan-V4-Llama3.1-GGUF)**
 2. Açılan sayfada **"Files and versions"** sekmesine tıklayın ve oradaki `.gguf` uzantılı modeli bilgisayarınıza indirin.
-3. İndirdiğiniz dosyayı projedeki `backend/models/` klasörünün içine yerleştirin.
+3. İndirdiğiniz dosyayı projedeki `backend/models/` klasörünün içine yerleştirin. *(Not: Eğer models klasörü boş görünüyorsa, modeli doğrudan bu dizine taşıyın).*
 4. Dosya adının tam olarak `Meta-Llama-3.1-8B.Q4_K_M.gguf` olduğundan emin olun.
 
 ### 3. Backend'i Başlatın
@@ -92,8 +110,34 @@ Yeni bir terminal sekmesi açın ve arayüzü başlatmak için şu komutları gi
 ```bash
 cd frontend
 npm install
+```
+
+**⚠️ Önemli: Çevre Değişkenlerini (.env) Ayarlayın**
+Projeyi çalıştırmadan önce `frontend` dizininde bulunan `.env.example` dosyasının adını `.env` olarak değiştirin (veya yeni bir `.env` dosyası oluşturup `.env.example` içindeki anahtarları kopyalayın). 
+
+Ardından sunucuyu ayağa kaldırın:
+```bash
 npm run dev
 ```
+
+---
+
+## 💡 Nasıl Kullanılır?
+
+Mizan, hem son kullanıcılar hem de geliştiriciler için iki farklı kullanım katmanı sunar:
+
+**1. Web Arayüzü (Son Kullanıcılar İçin):**
+* Sistemi başlattıktan sonra tarayıcınızdan `http://localhost:5173` adresine gidin.
+* **Metin Analizi:** Editöre metninizi yapıştırın ve "Analiz Et" butonuna basın. Hatalar atomik düzeyde (Tipografik, Deascii vb.) sınıflandırılarak renklendirilir.
+* **Toplu Dosya İşleme (Batch):** Desteklenen formatlardaki dosyalarınızı sürükle-bırak yöntemiyle tek seferde işleyebilirsiniz.
+
+**2. Gömülü API Referansı (Geliştiriciler İçin):**
+* Arayüzdeki **"Nasıl Kullanılır"** sekmesine tıklayarak, harici bir araca ihtiyaç duymadan Mizan'ın detaylı API dokümantasyonuna ulaşabilirsiniz. Gömülü dokümantasyon şu başlıkları içerir:
+  * 📖 **Mizan Servisi Hakkında:** Modern REST API standartları ve katı güvenlik mimarisi.
+  * 🛡️ **Güvenlik & Erişim:** CORS politikaları ve kurum ağı entegrasyon süreçleri.
+  * ⚠️ **Hatalar:** Detaylı HTTP durum kodları ve öngörülebilir hata nesneleri.
+  * 📊 **Meta Veriler:** İstek (Request) / Yanıt (Response) şemaları ve telemetri parametreleri.
+  * 📌 **Sürümleme:** Geleceğe dönük API versiyon kontrol stratejileri.
 
 ---
 
@@ -178,13 +222,29 @@ MIZAN-AI-CORRECTOR/
 │   └── requirements.txt
 ├── frontend/
 │   ├── src/
-│   │   ├── core/          # Sabitler (Constants), Context'ler ve Stiller
-│   │   ├── domain/        # Varlıklar (Entities) ve Kullanım Senaryoları (Usecases)
-│   │   ├── infrastructure/# Dış servis bağlantıları (ApiService.ts)
-│   │   ├── presentation/  # UI Bileşenleri, Sayfalar, Hook'lar ve Rotalar
+│   │   ├── core/          # Sabitler, global stiller ve context'ler
+│   │   │   ├── constants/
+│   │   │   ├── contexts/
+│   │   │   └── styles/
+│   │   ├── domain/        # İş mantığı (Usecases) ve Veri Modelleri (Entities)
+│   │   │   ├── entities/
+│   │   │   └── usecases/
+│   │   ├── infrastructure/# Dış entegrasyonlar ve API servisleri
+│   │   │   └── services/
+│   │   │       └── ApiService.ts
+│   │   ├── presentation/  # UI katmanı (Görünümler, bileşenler ve rotalar)
+│   │   │   ├── components/
+│   │   │   │   ├── docs/
+│   │   │   │   ├── AnalysisResult.tsx
+│   │   │   │   ├── Footer.tsx
+│   │   │   │   ├── Header.tsx
+│   │   │   │   └── Layout.tsx
+│   │   │   ├── hooks/
+│   │   │   ├── pages/
+│   │   │   └── routes.tsx
 │   │   ├── App.tsx
 │   │   └── main.tsx
-│   ├── .env               # Ortam değişkenleri
+│   ├── .env.example       # Ortam değişkenleri şablonu
 │   ├── index.html
 │   ├── package-lock.json
 │   ├── package.json
@@ -193,6 +253,18 @@ MIZAN-AI-CORRECTOR/
 ├── .gitignore
 └── README.md
 ```
+
+---
+
+## 👥 Geliştiriciler & Lisans
+
+* **Büşra Kaya** | *Full Stack Developer & UI/UX Designer*
+  * 💻 [GitHub Profilim](https://github.com/busra-kayaa)
+
+* **Doğa Ömrü Uzun** | *Frontend Architect*
+  * 💻 [GitHub Profili](https://github.com/Dogaomruuzun)
+
+📄 **Lisans:** Bu proje [MIT Lisansı](https://opensource.org/licenses/MIT) altında açık kaynak olarak paylaşılmıştır.
 
 ---
 *Bu proje, modern doğal dil işleme mimarileri ve kullanıcı dostu arayüz tasarımı üzerine bir AR-GE çalışmasıdır.*
