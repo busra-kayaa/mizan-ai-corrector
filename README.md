@@ -204,8 +204,8 @@ curl -X POST "http://localhost:8000/analyze" \
 * **Geniş Bağlam Penceresi:** `n_ctx=8192` token desteği ile tek seferde uzun paragrafların hafıza kaybı yaşamadan işlenmesi.
 * **Smart Token Allocation:** Gelen metnin uzunluğuna göre modelin yanıt alanını (`safe_max_tokens`) dinamik hesaplayan anti-overflow sistemi.
 * **Graceful Fallback (Güvenli Düşüş):** Metin LLM'in sınırlarını aşarsa API çökmez, sistem otomatik olarak "Regex Fallback" moduna geçerek temel düzeltmeleri garanti eder.
-* **Sequence Matcher Tokenization:** Orijinal metin ile düzeltilmiş metin arasındaki farkı `difflib.SequenceMatcher` ile kelime ve noktalama bazında atomik olarak eşleştirir.
-
+* **Fuzzy Token Alignment (Bulanık Hizalama):** Orijinal metin ile düzeltilmiş metin arasındaki karmaşık farklılıkları özel geliştirilmiş özyinelemeli (recursive) bir algoritma ile analiz eder.
+* **Kusursuz Atomik Ayrıştırma:** Yan yana gelmiş farklı hata türlerini (örn: "newyork yestarday" ➔ "New York yesterday") tek bir blok olarak yutmaz; her bir kelimeyi cımbızla ayırarak kendi hata kategorisinde (Terminoloji ve Yazım) ayrı ayrı sınıflandırır.
 ---
 
 ## 🏗️ Proje Mimarisi
