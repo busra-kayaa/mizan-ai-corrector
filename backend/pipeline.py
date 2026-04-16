@@ -113,29 +113,80 @@ class MizanHybridPipeline:
             "capitalization": "Cümle başı büyük harf kullanımı düzeltildi."
         }
         return EXPLANATIONS.get(err_type, "Sözdizimi veya yapısal bir hata düzeltildi.")
-
+    
+    def _align_replace_block(self, sub_orig, sub_corr):
+        # 1'e N veya N'e 1 durumları (Örn: newyork -> New York)
+        if len(sub_orig) <= 1 or len(sub_corr) <= 1:
+            return [{"original": " ".join(sub_orig), "corrected": " ".join(sub_corr)}]
+        
+        # Karmaşık durum: İki tarafta da birden fazla kelime var. (newyork yestarday -> New York yesterday)
+        best_ratio = 0
+        best_pair = None
+        
+        # Blok içindeki en benzer kelime çiftini (Pivot) bul
+        for i, o in enumerate(sub_orig):
+            for j, c in enumerate(sub_corr):
+                ratio = SequenceMatcher(None, o.lower(), c.lower()).ratio()
+                if ratio > 0.75 and ratio > best_ratio:
+                    best_ratio = ratio
+                    best_pair = (i, j)
+        
+        # Benzer bir çift bulduysak bloğu oradan ikiye böl ve atomik hale getir
+        if best_pair:
+            i, j = best_pair
+            left = self._align_replace_block(sub_orig[:i], sub_corr[:j])
+            pivot = [{"original": sub_orig[i], "corrected": sub_corr[j]}]
+            right = self._align_replace_block(sub_orig[i+1:], sub_corr[j+1:])
+            
+            # Boş listeleri filtreleyerek birleştir
+            return [x for x in (left + pivot + right) if x["original"] or x["corrected"]]
+        else:
+            return [{"original": " ".join(sub_orig), "corrected": " ".join(sub_corr)}]
+        
     def _extract_corrections(self, original_text, corrected_text):
-        # MÜKEMMEL TOKENİZASYON: Kelimeleri ve noktalamaları kesin olarak ayırır.
         token_pattern = r"[\wüçşığöİÜÇŞĞÖ]+(?:['’][\wüçşığöİÜÇŞĞÖ]+)*|[^\w\s]"
         orig_tokens = re.findall(token_pattern, original_text)
         corr_tokens = re.findall(token_pattern, corrected_text)
 
-        # SequenceMatcher'a direkt veriyoruz ki Büyük/Küçük harf değişimlerini 'replace' olarak algılasın
-        matcher = SequenceMatcher(None, orig_tokens, corr_tokens)
+        # MUCİZE BURADA: Eşleştirmeyi küçük harflerle yapıyoruz ki 'dr' ve 'Dr' kopmasın!
+        orig_tokens_lower = [t.lower() for t in orig_tokens]
+        corr_tokens_lower = [t.lower() for t in corr_tokens]
+
+        matcher = SequenceMatcher(None, orig_tokens_lower, corr_tokens_lower)
         verified_corrections = []
 
         for tag, i1, i2, j1, j2 in matcher.get_opcodes():
-            if tag == 'replace':
-                # Karmaşık döngüler yerine temiz 1'e 1 map
-                sub_orig = orig_tokens[i1:i2]
-                sub_corr = corr_tokens[j1:j2]
+            sub_orig = orig_tokens[i1:i2]
+            sub_corr = corr_tokens[j1:j2]
+            is_start = (j1 == 0) or (j1 > 0 and corr_tokens[j1 - 1] in ['.', '!', '?'])
+
+            if tag == 'equal':
+                # Kelimeler (dr = Dr) olarak eşleşti ama aslında harf boyutları farklıysa tespit et!
+                for k in range(len(sub_orig)):
+                    o = sub_orig[k]
+                    c = sub_corr[k]
+                    if o != c:
+                        err_type = self._determine_error_type(o, c, is_start and (k==0))
+                        verified_corrections.append({
+                            "original": o,
+                            "corrected": c,
+                            "type": err_type,
+                            "explanation": self._get_explanation(err_type)
+                        })
+
+            elif tag == 'replace':
+                # Yukarıda yazdığımız akıllı atomik bölücüyü devreye sok
+                aligned_blocks = self._align_replace_block(sub_orig, sub_corr)
                 
-                for k in range(max(len(sub_orig), len(sub_corr))):
-                    o = sub_orig[k] if k < len(sub_orig) else ""
-                    c = sub_corr[k] if k < len(sub_corr) else ""
+                for block in aligned_blocks:
+                    o = block["original"]
+                    c = block["corrected"]
+                    
+                    # Noktalamalardan önceki çirkin boşlukları temizle (Örn: "Dr ." -> "Dr.")
+                    o = re.sub(r'\s+([.,!?;:])', r'\1', o)
+                    c = re.sub(r'\s+([.,!?;:])', r'\1', c)
                     
                     if o != c:
-                        is_start = (j1 + k == 0) or (j1 + k > 0 and corr_tokens[j1 + k - 1] in ['.', '!', '?'])
                         err_type = self._determine_error_type(o, c, is_start)
                         verified_corrections.append({
                             "original": o,
@@ -143,28 +194,28 @@ class MizanHybridPipeline:
                             "type": err_type,
                             "explanation": self._get_explanation(err_type)
                         })
-            
+
             elif tag == 'insert':
-                for k in range(j1, j2):
-                    c = corr_tokens[k]
-                    err_type = self._determine_error_type("", c)
-                    verified_corrections.append({
-                        "original": "",
-                        "corrected": c,
-                        "type": err_type,
-                        "explanation": self._get_explanation(err_type)
-                    })
-                    
+                c = " ".join(sub_corr)
+                c = re.sub(r'\s+([.,!?;:])', r'\1', c)
+                err_type = self._determine_error_type("", c, is_start)
+                verified_corrections.append({
+                    "original": "",
+                    "corrected": c,
+                    "type": err_type,
+                    "explanation": self._get_explanation(err_type)
+                })
+
             elif tag == 'delete':
-                for k in range(i1, i2):
-                    o = orig_tokens[k]
-                    err_type = self._determine_error_type(o, "")
-                    verified_corrections.append({
-                        "original": o,
-                        "corrected": "", # UI tarafı için '[Silindi]' veya boşluk
-                        "type": err_type,
-                        "explanation": "Gereksiz karakter veya kelime temizlendi."
-                    })
+                o = " ".join(sub_orig)
+                o = re.sub(r'\s+([.,!?;:])', r'\1', o)
+                err_type = self._determine_error_type(o, "", False)
+                verified_corrections.append({
+                    "original": o,
+                    "corrected": "",
+                    "type": err_type,
+                    "explanation": "Gereksiz karakter veya kelime temizlendi."
+                })
 
         return verified_corrections
 
