@@ -76,12 +76,13 @@ export function AnalyzerPage() {
             <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-8">
                 
                 {/* SOL PANEL: Metin Girişi & Sürükle-Bırak Alanı */}
+                {/* SOL PANEL: Metin Girişi & Sürükle-Bırak Alanı */}
                 <div 
                     onDragEnter={onDragEnter}
                     onDragOver={onDragOver}
                     onDragLeave={onDragLeave}
                     onDrop={onDrop}
-                    className={`flex flex-col h-full bg-card border-2 rounded-2xl shadow-sm p-6 transition-all duration-300 relative ${
+                    className={`flex flex-col h-full bg-card border-2 rounded-2xl shadow-sm p-4 sm:p-6 transition-all duration-300 relative ${
                         isDragging 
                         ? "border-dashed border-destructive bg-destructive/5 scale-[1.01]" 
                         : isOverLimit ? "border-solid border-destructive/50" : "border-solid border-border"
@@ -90,18 +91,19 @@ export function AnalyzerPage() {
                     {isDragging && (
                         <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm rounded-2xl animate-in fade-in duration-200 pointer-events-none">
                             <FileUp size={56} className="mb-4 animate-bounce text-destructive" />
-                            <h3 className="text-xl font-bold text-foreground tracking-tight">Dosyayı Buraya Bırakın</h3>
-                            <p className="text-sm text-muted-foreground mt-2 font-medium">.txt, .md, .docx, .pdf, .csv, .srt desteklenir</p>
+                            <h3 className="text-xl font-bold text-foreground tracking-tight text-center px-4">Dosyayı Buraya Bırakın</h3>
+                            <p className="text-sm text-muted-foreground mt-2 font-medium text-center px-4">.txt, .md, .docx, .pdf, .csv, .srt desteklenir</p>
                         </div>
                     )}
 
-                    <div className="flex items-center justify-between mb-6">
+                    {/* Üst Başlık ve Örnek Dene Butonu */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 gap-2">
                         <label className="text-lg font-bold text-foreground tracking-tight">Metin Girişi</label>
                         
                         <button
                             onClick={handleTryExample}
                             disabled={isAnalyzing}
-                            className="flex items-center gap-1.5 text-sm font-semibold text-destructive hover:text-destructive/80 transition-colors disabled:opacity-50"
+                            className="flex items-center gap-1.5 text-sm font-semibold text-destructive hover:text-destructive/80 transition-colors disabled:opacity-50 self-start sm:self-auto"
                         >
                             Bir örnek dene
                         </button>
@@ -110,7 +112,7 @@ export function AnalyzerPage() {
                     <textarea
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
-                        className={`w-full flex-1 bg-background text-foreground border rounded-xl p-5 resize-none focus:outline-none transition-all text-[15px] leading-relaxed shadow-inner ${
+                        className={`w-full flex-1 bg-background text-foreground border rounded-xl p-4 sm:p-5 resize-none focus:outline-none transition-all text-[15px] leading-relaxed shadow-inner ${
                             isOverLimit 
                             ? "border-destructive/50 focus:border-destructive focus:ring-1 focus:ring-destructive/50" 
                             : "border-border focus:border-destructive focus:ring-1 focus:ring-destructive"
@@ -121,7 +123,7 @@ export function AnalyzerPage() {
                     
                     {/* YENİ: Karakter Sınırı Uyarısı */}
                     {isOverLimit && (
-                        <div className="mt-4 p-3.5 rounded-xl bg-destructive/10 text-destructive text-[14px] font-bold flex items-start gap-3 border border-destructive/20 relative z-10 animate-in slide-in-from-top-2 fade-in duration-300 shadow-sm">
+                        <div className="mt-4 p-3.5 rounded-xl bg-destructive/10 text-destructive text-[13px] sm:text-[14px] font-bold flex items-start gap-3 border border-destructive/20 relative z-10 animate-in slide-in-from-top-2 fade-in duration-300 shadow-sm">
                             <AlertTriangle size={20} className="mt-0.5 shrink-0 animate-pulse" />
                             <div className="flex-1 leading-relaxed tracking-wide">
                                 10.000 karakter sınırını aştınız. Analiz yapabilmek için lütfen metni kısaltın veya daha uzun metinler için parçalara bölerek ilerleyin.
@@ -129,16 +131,16 @@ export function AnalyzerPage() {
                         </div>
                     )}
 
-                    {/* API Error Gösterimi (Karakter sınırı uyarısı varken gizlenebilir veya altında durabilir) */}
+                    {/* API Error Gösterimi */}
                     {error && !isOverLimit && (
-                        <div className="mt-4 p-4 rounded-xl bg-destructive/10 text-destructive text-[14px] font-bold flex items-start gap-3 border border-destructive/20 relative z-10 animate-in slide-in-from-top-2 fade-in duration-300 shadow-sm">
+                        <div className="mt-4 p-3.5 sm:p-4 rounded-xl bg-destructive/10 text-destructive text-[13px] sm:text-[14px] font-bold flex items-start gap-3 border border-destructive/20 relative z-10 animate-in slide-in-from-top-2 fade-in duration-300 shadow-sm">
                             <AlertCircle size={20} className="mt-0.5 shrink-0 animate-pulse" />
                             <div className="flex-1 leading-relaxed tracking-wide">
                                 {error}
                             </div>
                             <button 
                                 onClick={() => clearOutput()} 
-                                className="text-destructive/60 hover:text-destructive hover:bg-destructive/10 p-1 rounded-lg transition-colors"
+                                className="text-destructive/60 hover:text-destructive hover:bg-destructive/10 p-1 rounded-lg transition-colors shrink-0"
                                 title="Uyarıyı Kapat"
                             >
                                 <X size={16} />
@@ -146,8 +148,11 @@ export function AnalyzerPage() {
                         </div>
                     )}
 
-                    <div className="mt-5 flex justify-between items-center relative z-10">
-                        <div className="text-sm text-muted-foreground font-semibold tracking-wide flex items-center gap-2">
+                    {/* DÜZELTİLEN RESPONSIVE ALT BAR */}
+                    <div className="mt-4 sm:mt-5 flex flex-wrap-reverse sm:flex-nowrap justify-between items-center gap-y-4 gap-x-2 relative z-10">
+                        
+                        {/* Kelime ve Karakter Sayacı */}
+                        <div className="text-xs sm:text-sm text-muted-foreground font-semibold tracking-wide flex items-center gap-1.5 sm:gap-2 whitespace-nowrap">
                             <span>
                                 <span className={isOverLimit ? "text-destructive font-extrabold" : (input.length > 0 ? "text-foreground" : "")}>
                                     {input.length}
@@ -159,7 +164,8 @@ export function AnalyzerPage() {
                             </span>
                         </div>
 
-                        <div className="flex gap-3 items-center">
+                        {/* Buton Grubu */}
+                        <div className="flex gap-2 sm:gap-3 items-center w-full sm:w-auto justify-end">
                             <input 
                                 type="file" 
                                 id="txt-upload" 
@@ -170,25 +176,25 @@ export function AnalyzerPage() {
                             />
                             <label
                                 htmlFor="txt-upload"
-                                className="p-3 rounded-xl bg-secondary text-secondary-foreground hover:bg-muted cursor-pointer disabled:opacity-50 transition-all duration-200 flex items-center justify-center border border-border/50 shadow-sm"
-                                title="Toplu Analiz İçin Dosya Yükle (.txt, .md, .csv, .srt, .docx, .pdf)"
+                                className="p-2.5 sm:p-3 rounded-xl bg-secondary text-secondary-foreground hover:bg-muted cursor-pointer disabled:opacity-50 transition-all duration-200 flex items-center justify-center border border-border/50 shadow-sm shrink-0"
+                                title="Toplu Analiz İçin Dosya Yükle"
                             >
-                                <FileUp size={20} />
+                                <FileUp size={18} className="sm:w-5 sm:h-5" />
                             </label>
 
                             <button
                                 onClick={clearOutput}
                                 disabled={!input && !output && !error}
-                                className="p-3 rounded-xl bg-secondary text-secondary-foreground hover:bg-muted disabled:opacity-50 transition-all duration-200"
+                                className="p-2.5 sm:p-3 rounded-xl bg-secondary text-secondary-foreground hover:bg-muted disabled:opacity-50 transition-all duration-200 shrink-0"
                                 title="Temizle"
                             >
-                                <Trash2 size={20} />
+                                <Trash2 size={18} className="sm:w-5 sm:h-5" />
                             </button>
 
                             <button
                                 onClick={onAnalyzeClick}
                                 disabled={!input.trim() || isAnalyzing || isOverLimit}
-                                className={`px-6 py-3 rounded-xl text-white transition-all duration-200 flex items-center justify-center gap-2 font-bold tracking-wide shadow-md ${
+                                className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl text-white transition-all duration-200 flex items-center justify-center gap-2 font-bold tracking-wide shadow-md flex-1 sm:flex-none whitespace-nowrap ${
                                     isOverLimit 
                                     ? "bg-muted text-muted-foreground opacity-50 cursor-not-allowed" 
                                     : "bg-destructive hover:opacity-90 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0"
@@ -196,7 +202,7 @@ export function AnalyzerPage() {
                                 title="Analiz Et (Ctrl + Enter)"
                             >
                                 <span>{isAnalyzing ? "İşleniyor..." : "Analiz Et"}</span>
-                                <Send size={18} className={isAnalyzing ? "animate-pulse" : ""} />
+                                <Send size={16} className={`sm:w-4.5 sm:h-4.5 ${isAnalyzing ? "animate-pulse" : ""}`} />
                             </button>
                         </div>
                     </div>
