@@ -15,17 +15,17 @@
 ## 📸 Arayüz & Dokümantasyon
 
 ### 1. Detaylı ve Atomik Analiz (Dark Mode)
-![Mizan Analiz Sonucu](<img width="1912" height="866" alt="analyze_result_dark" src="https://github.com/user-attachments/assets/7d3ed13c-e286-45f5-b033-0468990478c4" />)
+![Mizan Analiz Sonucu](https://github.com/user-attachments/assets/7d3ed13c-e286-45f5-b033-0468990478c4)
 > *Llama 3.1 ve Regex motorunun tespit ettiği hataların kategorize edilmiş, detaylı görünümü.*
 
 ### 2. Gömülü API Referansı (Light Mode)
-![Mizan API Dokümantasyonu](<img width="1912" height="867" alt="how-to-use_page_light" src="https://github.com/user-attachments/assets/cd6b16cc-63c9-4c38-a4e5-2f06576a3482" />
-)
+![Mizan API Dokümantasyonu](https://github.com/user-attachments/assets/cd6b16cc-63c9-4c38-a4e5-2f06576a3482)
 > *Geliştiriciler için doğrudan arayüze entegre edilmiş, modern REST API ve HTTP Durum Kodları dokümantasyonu.*
 
 ### 3. Kullanıcı Geri Bildirim Sistemi
-![Mizan Geri Bildirim](<img width="1912" height="866" alt="dislike_page" src="https://github.com/user-attachments/assets/914a2b66-7500-48a7-be5a-b72236c23e70" />)
+![Mizan Geri Bildirim](https://github.com/user-attachments/assets/914a2b66-7500-48a7-be5a-b72236c23e70)
 > *Yapay zeka modelini sürekli iyileştirmek (RLHF) için tasarlanmış detaylı geri bildirim mekanizması.*
+
 ---
 
 ## ✨ Öne Çıkan Özellikler
@@ -248,10 +248,13 @@ MIZAN-AI-CORRECTOR/
 
 ---
 
-## 👥 Geliştirici & Lisans
+## 👥 Geliştiriciler & Lisans
 
-**Büşra Kaya** | *Software Developer*
-* 💻 [GitHub Profilim](https://github.com/busra-kayaa)
+* **Büşra Kaya** | *Full Stack Developer & UI/UX Designer*
+  * 💻 [GitHub Profilim](https://github.com/busra-kayaa)
+
+* **Doğa Ömrü Uzun** | *Frontend Architect*
+  * 💻 [GitHub Profili](https://github.com/Dogaomruuzun)
 
 📄 **Lisans:** Bu proje [MIT Lisansı](https://opensource.org/licenses/MIT) altında açık kaynak olarak paylaşılmıştır.
 
