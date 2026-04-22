@@ -37,4 +37,8 @@ class RuleBasedCorrector:
                         })
                 corrected_text = pattern.sub(correct_form, corrected_text)
 
-        return corrected_text, corrections_list
+        corrected_text = re.sub(r'\s+', ' ', corrected_text)
+        
+        corrected_text = re.sub(r'\s+([.,!?;:])', r'\1', corrected_text)
+
+        return corrected_text.strip(), corrections_list
