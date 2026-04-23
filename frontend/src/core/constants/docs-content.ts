@@ -152,7 +152,7 @@ puts response.body`,
 
 export const HTTP_STATUS_CODES = [
     { code: 200, label: "OK", description: "Metin başarıyla analiz edildi ve düzeltildi." },
-    { code: 400, label: "Bad Request", description: "Geçersiz istek. Metin alanı boş veya limitlerin dışında (1-10000 karakter)." },
+    { code: 400, label: "Bad Request", description: "Geçersiz istek. Metin alanı boş, limitlerin dışında (Tekil: Max 10.000) veya Toplu İşlem (Batch) kurallarına uymuyor." },
     { code: 403, label: "Forbidden", description: "CORS Hatası. İstek atılan alan adı (Domain) izinli listesinde değil." },
     { code: 422, label: "Unprocessable Entity", description: "Gönderilen veri Pydantic şema doğrulamalarından geçemedi." },
     { code: 429, label: "Too Many Requests", description: "Rate limit aşıldı. Lütfen bekleyin (Limit: 20 istek/dakika)." },
@@ -160,7 +160,6 @@ export const HTTP_STATUS_CODES = [
     { code: 503, label: "Service Unavailable", description: "Yapay zeka modeli henüz belleğe yüklenmedi, lütfen bekleyip tekrar deneyin." },
 ];
 
-// Error types with descriptions
 export const API_ERROR_TYPES = [
     { type: "validation_error", statusCodes: "400, 422", description: "Gönderilen istek payload'u hatalı. 'text' parametresi eksik veya çok uzun olabilir." },
     { type: "cors_policy_error", statusCodes: "403", description: "Güvenlik ihlali. Tarayıcı üzerinden yapılan istek, yetkilendirilmemiş bir web sitesinden geliyor." },
@@ -169,12 +168,10 @@ export const API_ERROR_TYPES = [
     { type: "inference_error", statusCodes: "500", description: "Metin analiz edilirken LLM katmanında beklenmedik bir çökme meydana geldi." },
 ];
 
-// Error response example (FastAPI standartlarına göre)
 export const ERROR_RESPONSE_EXAMPLE = {
     detail: "Too many requests. Please try again later."
 };
 
-// 422 Validation Error example (Pydantic formatı)
 export const VALIDATION_ERROR_EXAMPLE = {
     detail: [
         {
@@ -185,6 +182,9 @@ export const VALIDATION_ERROR_EXAMPLE = {
     ]
 };
 
+// ==========================================
+// TEKİL ANALİZ (SINGLE) VERİLERİ
+// ==========================================
 export const METADATA_REQUEST = {
     text: "The goverment in Turkiye has taked a new decision yesterday."
 };
@@ -220,12 +220,10 @@ export const METADATA_RESPONSE = {
     }
 };
 
-// Request body parameters documentation
 export const REQUEST_PARAMS = [
     { name: "text", type: "string", required: true, description: "Analiz edilecek ve düzeltilecek kaynak metin (Min 1, Max 10.000 karakter)." },
 ];
 
-// Response body parameters documentation
 export const RESPONSE_PARAMS = [
     { name: "originalText", type: "string", description: "API'ye gönderdiğiniz dokunulmamış kaynak metin." },
     { name: "correctedText", type: "string", description: "Mizan tarafından kural ve LLM bazlı düzeltilmiş nihai metin." },
@@ -241,7 +239,68 @@ export const RESPONSE_PARAMS = [
     { name: "metadata.char_count", type: "integer", description: "Analiz edilen metnin toplam karakter sayısı." },
 ];
 
-// Versioning info
+// ==========================================
+// TOPLU ANALİZ (BATCH) VERİLERİ (YENİ)
+// ==========================================
+export const BATCH_REQUEST_EXAMPLE = {
+    texts: [
+        "Heavy snow fall in macedonia caused severe traffic jams in the capital city.",
+        "102, the shipping to Czechia took almost three weeks, I am very disappointed!"
+    ]
+};
+
+export const BATCH_RESPONSE_EXAMPLE = {
+    results: [
+        {
+            originalText: "Heavy snow fall in macedonia caused severe traffic jams in the capital city.",
+            correctedText: "Heavy snow fall in North Macedonia caused severe traffic jams in the capital city.",
+            corrections: [
+                {
+                    original: "macedonia",
+                    corrected: "North Macedonia",
+                    type: "terminology",
+                    explanation: "Özel isim veya terminoloji hatası düzeltildi."
+                }
+            ],
+            metadata: { regex_count: 1, neural_count: 0, processing_time_ms: 145 }
+        },
+        {
+            originalText: "102, the shipping to Czechia took almost three weeks, I am very disappointed!",
+            correctedText: "102, the shipping to Czechia took almost three weeks, I am very disappointed!",
+            corrections: [
+                {
+                    original: "disapointed",
+                    corrected: "disappointed",
+                    type: "typographic",
+                    explanation: "Tipografik harf veya klavye hatası düzeltildi."
+                }
+            ],
+            metadata: { regex_count: 0, neural_count: 1, processing_time_ms: 850 }
+        }
+    ],
+    metadata: {
+        total_processed: 2,
+        processing_time_ms: 995
+    }
+};
+
+export const BATCH_REQUEST_PARAMS = [
+    { name: "texts", type: "array of strings", required: true, description: "Analiz edilecek satırların dizisi. Sistemin kilitlenmemesi için her bir elemanın (satırın) max 500 karakter olması önerilir." },
+];
+
+export const BATCH_RESPONSE_PARAMS = [
+    { name: "results", type: "array", description: "Her bir satırın/metnin analiz sonucunu sırasıyla içeren dizi." },
+    { name: "results[].originalText", type: "string", description: "Analiz edilen spesifik satırın orijinal hali." },
+    { name: "results[].correctedText", type: "string", description: "O satırın düzeltilmiş hali." },
+    { name: "results[].corrections", type: "array", description: "O satırdaki tüm düzeltmelerin (atomik) listesi (Bkz. Tekil Yanıt Yapısı)." },
+    { name: "metadata", type: "object", description: "Tüm toplu işlem sürecinin performans telemetrisi." },
+    { name: "metadata.total_processed", type: "integer", description: "Başarıyla işlenen toplam satır sayısı." },
+    { name: "metadata.processing_time_ms", type: "float", description: "Tüm satırların bitirilmesi için geçen toplam süre (ms)." },
+];
+
+// ==========================================
+// VERSİYON BİLGİLERİ
+// ==========================================
 export const VERSION_COMPARISON = {
     v3: {
         version: "V3 (Legacy)",
@@ -252,9 +311,9 @@ export const VERSION_COMPARISON = {
     },
     v4: {
         version: "V4 (Current Hybrid)",
-        baseUrl: `${MIZAN_BASE_URL}/analyze`,
+        baseUrl: `${MIZAN_BASE_URL}/analyze | /batch`,
         maxChars: 10000,
         status: "Aktif",
-        description: "Regex kuralları ile Llama 3.1 LLM modelini birleştiren gelişmiş, bağlama duyarlı güncel motor.",
+        description: "Regex kuralları ile Llama 3.1 LLM modelini birleştiren gelişmiş motor. Devasa metinleri parçalama (Chunking) ve Toplu İşlem (Batch Processing) yeteneklerine sahiptir.",
     },
 };
