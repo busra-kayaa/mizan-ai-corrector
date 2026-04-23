@@ -1,6 +1,6 @@
 # ⚖️ Mizan
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.10+-blue.svg)
 ![React](https://img.shields.io/badge/react-18.x-61dafb.svg)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688.svg)
@@ -18,25 +18,32 @@
 ![Mizan Analiz Sonucu](./docs/images/analyze_result_dark.png)
 > *Llama 3.1 ve Regex motorunun tespit ettiği hataların kategorize edilmiş, detaylı görünümü.*
 
-### 2. Gömülü API Referansı (Light Mode)
-![Mizan API Dokümantasyonu](./docs/images/how-to-use_page_light.png)
+### 2. Toplu İşlem ve Akordiyon Arayüzü (Batch Mode)
+![Mizan Batch İşlemi](./docs/images/batch_result_dark.png)
+> *Çoklu dosya yönetim kuyruğu, güvenlik sınırları ve dosya bazlı açılır-kapanır (Accordion) analiz sonuçları.*
+
+### 3. Gömülü API Referansı (Light Mode)
+![Mizan API Dokümantasyonu](./docs/images/how-to-use_light_about.png)
 > *Geliştiriciler için doğrudan arayüze entegre edilmiş, modern REST API ve HTTP Durum Kodları dokümantasyonu.*
 
-### 3. Kullanıcı Geri Bildirim Sistemi
-![Mizan Geri Bildirim](./docs/images/dislike_page.png)
+### 4. Kullanıcı Geri Bildirim Sistemi
+![Mizan Geri Bildirim](./docs/images/dislike_page_dark.png)
 > *Yapay zeka modelini sürekli iyileştirmek (RLHF) için tasarlanmış detaylı geri bildirim mekanizması.*
 
 ---
 
 ## ✨ Öne Çıkan Özellikler
 
-* **🚀 Hibrit Motor (Regex + LLM):** Kural tabanlı katman ile milisaniyelik ön temizlik yapar, ardından Llama-3.1-8B modeli ile derin bağlamsal analiz gerçekleştirir.
+* **🚀 Hibrit Motor (Regex + LLM):** Kural tabanlı katman ile milisaniyelik ön temizlik yapar (örn: noktalama sonrası boşluk ekleme), ardından Llama-3.1-8B modeli ile derin bağlamsal analiz gerçekleştirir.
 * **🧩 Atomik Düzeltme & Sınıflandırma:** Hataları bütünsel olarak değil; *Dilbilgisi, Terminoloji, Tipografi, Türkçe Karakter (Deascii)* gibi farklı kategorilerde atomik olarak parçalar ve raporlar.
 * **📖 Gömülü (Built-in) API Dokümantasyonu:** Harici bir araca gerek kalmadan, doğrudan React arayüzü üzerinden erişilebilen kapsamlı geliştirici dokümantasyonu.
 * **🔒 %100 Yerel & Güvenli:** Veriler hiçbir bulut servisine çıkmaz. Model tamamen yerel (Local) sunucuda koşar.
 * **📂 Toplu Dosya Analizi (Batch Processing):** `.txt`, `.md`, `.docx`, `.pdf`, `.csv` ve `.srt` dosyalarını sürükle-bırak yöntemiyle asenkron olarak işler.
-* **🛡️ Enterprise-Grade Güvenlik:** Katı CORS politikaları, IP tabanlı Rate-Limiting ve detaylı HTTP Hata Yönetimi.
+* **🛡️ Enterprise-Grade Güvenlik:** Katı CORS politikaları, IP tabanlı Rate-Limiting ve sistem sağlığı için "Max 5 Dosya / 500 Karakter Satır" ön doğrulama mekanizmaları.
 * **🔄 Sürekli Öğrenme ve Geri Bildirim (RLHF Altyapısı):** Analiz sonuçları için entegre edilmiş geri bildirim modülü sayesinde, modelin hatalı düzeltmelerini raporlama ve gelecekteki fine-tuning süreçleri için veri toplama imkanı.
+* **🛑 Ağ Seviyesinde İptal (Abort Controller):** Uzun süren toplu analiz işlemlerini anında, sunucu yorulmadan tek tuşla durdurma imkanı.
+* **✂️ Büyük Metin Parçalama (Chunking):** 10.000 karaktere kadar olan devasa metinleri LLM'i kilitlemeden, otomatik olarak paragraflara bölerek işler ve aslına uygun birleştirir.
+* **🎨 Kusursuz Diff Boyama:** Metin farklılıklarını `diff` algoritması ile analiz ederek yanlış işaretlemelerin (false-positive) önüne geçer; hataları kelime içindeki harflere kadar inerek (inline) işaretler.
 
 ### 🎯 7 Katmanlı Hata Sınıflandırması
 Sistem, tespit ettiği hataları sadece "düzeltildi" deyip geçmez, atomik olarak sınıflandırır:
@@ -61,6 +68,7 @@ Sistem, tespit ettiği hataları sadece "düzeltildi" deyip geçmez, atomik olar
 ### Frontend (Client)
 * **Kütüphane:** React (TypeScript)
 * **Derleyici:** Vite
+* **Bağımlılıklar:** `diff` (Hizalama), `lucide-react` (İkonografi)
 * **Stilleme:** Tailwind CSS (Özel Light/Dark Mode pastel tema)
 * **İkonlar:** Lucide React
 
@@ -128,8 +136,8 @@ Mizan, hem son kullanıcılar hem de geliştiriciler için iki farklı kullanım
 
 **1. Web Arayüzü (Son Kullanıcılar İçin):**
 * Sistemi başlattıktan sonra tarayıcınızdan `http://localhost:5173` adresine gidin.
-* **Metin Analizi:** Editöre metninizi yapıştırın ve "Analiz Et" butonuna basın. Hatalar atomik düzeyde (Tipografik, Deascii vb.) sınıflandırılarak renklendirilir.
-* **Toplu Dosya İşleme (Batch):** Desteklenen formatlardaki dosyalarınızı sürükle-bırak yöntemiyle tek seferde işleyebilirsiniz.
+* **Tekil Belge Analizi:** Metninizi doğrudan yapıştırabilir veya `.txt, .csv, .md, .docx, .pdf, .srt` formatlarındaki dosyanızı sürükleyip bırakarak 10.000 karaktere kadar içerikleri analiz edebilirsiniz. Devasa metinler sistem tarafından arka planda akıllıca parçalanarak (chunking) işlenir. Hatalar atomik düzeyde `diff` algoritması ile kusursuz olarak renklendirilir.
+* **Toplu Analiz Masası (Batch Mode):** Desteklenen `.txt, .csv, .md, .docx, .pdf, .srt` formatlarındaki dosyalarınızı sürükle-bırak yöntemiyle tek seferde işleyebilirsiniz. Aynı anda **maksimum 5 dosya** ve satır başı **500 karakter** sınırıyla işlem yapılır. İstediğiniz an işlemi iptal edebilir, sonuçları Akordiyon arayüzünde inceleyebilirsiniz.
 
 **2. Gömülü API Referansı (Geliştiriciler İçin):**
 * Arayüzdeki **"Nasıl Kullanılır"** sekmesine tıklayarak, harici bir araca ihtiyaç duymadan Mizan'ın detaylı API dokümantasyonuna ulaşabilirsiniz. Gömülü dokümantasyon şu başlıkları içerir:
@@ -145,7 +153,7 @@ Mizan, hem son kullanıcılar hem de geliştiriciler için iki farklı kullanım
 
 Mizan, diğer sistemlerin entegre olabilmesi için standart RESTful API sunar.
 
-### Tekil Analiz Modeli
+### Tekil Analiz Modeli (`/analyze`)
 
 **cURL İsteği (Request):**
 
@@ -196,6 +204,21 @@ curl -X POST "http://localhost:8000/analyze" \
 }
 ```
 
+### Toplu Analiz Modeli (`/batch`)
+
+Kuyruk yapısı için optimize edilmiş çoklu satır rotası.
+
+```bash
+curl -X POST "http://localhost:8000/batch" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "texts": [
+      "first sentence to analyze",
+      "second sentence with an errror"
+    ]
+  }'
+```
+
 ---
 
 ## 🧠 Akıllı Pipeline (İşlem Hattı) Mimarisi
@@ -206,6 +229,9 @@ curl -X POST "http://localhost:8000/analyze" \
 * **Graceful Fallback (Güvenli Düşüş):** Metin LLM'in sınırlarını aşarsa API çökmez, sistem otomatik olarak "Regex Fallback" moduna geçerek temel düzeltmeleri garanti eder.
 * **Fuzzy Token Alignment (Bulanık Hizalama):** Orijinal metin ile düzeltilmiş metin arasındaki karmaşık farklılıkları özel geliştirilmiş özyinelemeli (recursive) bir algoritma ile analiz eder.
 * **Kusursuz Atomik Ayrıştırma:** Yan yana gelmiş farklı hata türlerini (örn: "newyork yestarday" ➔ "New York yesterday") tek bir blok olarak yutmaz; her bir kelimeyi cımbızla ayırarak kendi hata kategorisinde (Terminoloji ve Yazım) ayrı ayrı sınıflandırır.
+* **Large Text Chunking:** 2500 karakteri aşan uzun metinlerin modelde taşma yaratmasını engellemek için metni otomatik paragraflara bölen ayrıştırma motoru.
+* **Regex Auto-Spacing:** Yapay zekaya gitmeden önce, noktalamalardan sonra unutulan boşlukları kural tabanlı katmanda çözen performans optimizasyonu.
+
 ---
 
 ## 🏗️ Proje Mimarisi
@@ -218,7 +244,7 @@ MIZAN-AI-CORRECTOR/
 │   ├── core/              # Regex kural motorları ve NLP mantığı
 │   ├── models/            # .gguf formatındaki yerel LLM modelleri
 │   ├── main.py            # FastAPI sunucusu ve Endpoint rotaları
-│   ├── pipeline.py        # Hibrit işlem hattı (Orkestrasyon)
+│   ├── pipeline.py        # Hibrit işlem hattı (Orkestrasyon & Chunking)
 │   └── requirements.txt
 ├── frontend/
 │   ├── src/
@@ -235,12 +261,14 @@ MIZAN-AI-CORRECTOR/
 │   │   ├── presentation/  # UI katmanı (Görünümler, bileşenler ve rotalar)
 │   │   │   ├── components/
 │   │   │   │   ├── docs/
-│   │   │   │   ├── AnalysisResult.tsx
+│   │   │   │   ├── BatchAnalyzer.tsx  # Toplu analiz ve kuyruk yönetimi
+│   │   │   │   ├── AnalysisResult.tsx # Diff tabanlı boyama sistemi
 │   │   │   │   ├── Footer.tsx
 │   │   │   │   ├── Header.tsx
 │   │   │   │   └── Layout.tsx
 │   │   │   ├── hooks/
 │   │   │   ├── pages/
+│   │   │   │   └── AnalyzerPage.tsx   # Tab navigasyonlu ana arayüz
 │   │   │   └── routes.tsx
 │   │   ├── App.tsx
 │   │   └── main.tsx
