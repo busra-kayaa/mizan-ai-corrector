@@ -157,7 +157,7 @@ async def analyze_text(request: Request, payload: AnalyzeRequest):
     start_time = time.time()
 
     try:
-        sonuc = await asyncio.to_thread(model.process, payload.text)
+        sonuc = await asyncio.to_thread(model.process_large_text, payload.text)
         process_time_ms = round((time.time() - start_time) * 1000, 2)
 
         meta = sonuc.get("metadata", {})
@@ -199,7 +199,7 @@ async def batch_analyze(request: Request, payload: BatchRequest):
             break
 
         try:
-            sonuc = await asyncio.to_thread(model.process, text)
+            sonuc = await asyncio.to_thread(model.process_large_text, text)           
             results.append(BatchResultItem(
                 status="success", 
                 correctedText=sonuc.get("correctedText", text),

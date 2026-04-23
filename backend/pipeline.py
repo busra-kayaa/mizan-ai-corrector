@@ -38,11 +38,13 @@ class MizanHybridPipeline:
             verbose=False
         )
 
+        # GÜNCEL PROMPT: Özel isimleri, markaları ve yer adlarını koruması/büyütmesi için kesin talimat
         self.system_instruction = (
-            "You are an expert text correction system. Fix ALL errors and output JSON. "
-            "SEQUENTIAL ORDER RULE: List corrections in the EXACT order they appear. "
-            "STRICT ATOMIC RULE: Split corrections into single words or punctuation marks. DO NOT group multiple words together. "
-            "If a word or punctuation is missing, use an empty string '' as the original text."
+            "You are an expert text correction system. Fix ALL spelling, grammar, punctuation, and capitalization errors. "
+            "CRITICAL: You must capitalize proper nouns, places, brands, and landmarks correctly (e.g., 'london' -> 'London', 'big ben' -> 'Big Ben', 'micro soft' -> 'Microsoft'). "
+            "IMPORTANT: Output ONLY a valid JSON object with a single key 'correctedText' containing the fully corrected text. "
+            "Do NOT provide explanations. Do NOT list the corrections. Just return the JSON."
+            "\nExample: {\"correctedText\": \"This is the fully fixed text.\"}"
         )
 
     def _build_prompt(self, text):
@@ -57,45 +59,49 @@ class MizanHybridPipeline:
 ### Response:
 """
 
+    def _turkish_lower(self, text):
+        return text.replace('I', 'ı').replace('İ', 'i').lower()
+
     def _determine_error_type(self, original, corrected, is_start_of_sentence=False):
         orig = (original or "").strip()
         corr = (corrected or "").strip()
-        orig_l = orig.lower()
-        corr_l = corr.lower()
+        
+        # Standart lower() yerine kendi fonksiyonumuzu kullanıyoruz
+        orig_l = self._turkish_lower(orig)
+        corr_l = self._turkish_lower(corr)
 
         if not orig and not corr:
             return "lexical"
 
-        # 1. ÖNCELİK: NOKTALAMA (Punctuation)
-        # Sadece noktalama işareti değişimi veya eklemesi/silmesi mi diye bakıyoruz
         punctuation_regex = r"^[.,!?;:()\"\'\-]+$"
         if re.match(punctuation_regex, corr) or (orig and not corr and re.match(punctuation_regex, orig)):
             return "punctuation"
 
-        # 2. ÖNCELİK: TÜRKÇE KARAKTER (Deascii)
-        # Kelimenin ASCII maskesini alarak net Türkçe karakter değişimi tespiti
-        turkish_map = str.maketrans("çğıöşüİĞÜŞÖÇ", "cgiosuIGUSOC")
+        # TÜRKÇE KARAKTER KONTROLÜ (Artık kusursuz çalışacak)
+        turkish_map = str.maketrans("çğıöşü", "cgiosu")
         if orig_l != corr_l and orig_l.translate(turkish_map) == corr_l.translate(turkish_map):
             return "deascii"
 
-        # 3. ÖNCELİK: BÜYÜK/KÜÇÜK HARF
+        # İNGİLİZCE ÇEKİM EKLERİ KONTROLÜ (grammar tespiti için)
+        if len(orig_l) > 2 and len(corr_l) > 2:
+            if corr_l == orig_l + "s" or corr_l == orig_l + "es" or corr_l == orig_l + "d" or corr_l == orig_l + "ed" or corr_l == orig_l + "ing" or orig_l == corr_l + "s":
+                return "grammar"
+
         if orig_l == corr_l and orig != corr:
             return "capitalization" if is_start_of_sentence else "terminology"
 
-        # 4. ÖNCELİK: DİLBİLGİSİ (Grammar)
         grammar_words = {
             "a", "an", "the", "in", "on", "at", "to", "for", "of", "with", "by", "from",
             "is", "are", "am", "was", "were", "has", "have", "had", "do", "does", "did",
-            "their", "there", "they're", "its", "it's", "your", "you're", "whose", "who's"
+            "their", "there", "they're", "its", "it's", "your", "you're", "whose", "who's",
+            "than", "then"
         }
         if orig_l in grammar_words or corr_l in grammar_words:
             return "grammar"
 
-        # 5. ÖNCELİK: TERMİNOLOJİ (Özel İsimler)
         if corr and corr[0].isupper() and not is_start_of_sentence:
             return "terminology"
 
-        # 6. SON ADIM: YAZIM HATASI vs KELİME SEÇİMİ (Typo vs Lexical)
         similarity = SequenceMatcher(None, orig_l, corr_l).ratio()
         if similarity >= 0.70:
             return "typographic"
@@ -115,15 +121,12 @@ class MizanHybridPipeline:
         return EXPLANATIONS.get(err_type, "Sözdizimi veya yapısal bir hata düzeltildi.")
     
     def _align_replace_block(self, sub_orig, sub_corr):
-        # 1'e N veya N'e 1 durumları (Örn: newyork -> New York)
         if len(sub_orig) <= 1 or len(sub_corr) <= 1:
             return [{"original": " ".join(sub_orig), "corrected": " ".join(sub_corr)}]
         
-        # Karmaşık durum: İki tarafta da birden fazla kelime var. (newyork yestarday -> New York yesterday)
         best_ratio = 0
         best_pair = None
         
-        # Blok içindeki en benzer kelime çiftini (Pivot) bul
         for i, o in enumerate(sub_orig):
             for j, c in enumerate(sub_corr):
                 ratio = SequenceMatcher(None, o.lower(), c.lower()).ratio()
@@ -131,14 +134,12 @@ class MizanHybridPipeline:
                     best_ratio = ratio
                     best_pair = (i, j)
         
-        # Benzer bir çift bulduysak bloğu oradan ikiye böl ve atomik hale getir
         if best_pair:
             i, j = best_pair
             left = self._align_replace_block(sub_orig[:i], sub_corr[:j])
             pivot = [{"original": sub_orig[i], "corrected": sub_corr[j]}]
             right = self._align_replace_block(sub_orig[i+1:], sub_corr[j+1:])
             
-            # Boş listeleri filtreleyerek birleştir
             return [x for x in (left + pivot + right) if x["original"] or x["corrected"]]
         else:
             return [{"original": " ".join(sub_orig), "corrected": " ".join(sub_corr)}]
@@ -148,9 +149,9 @@ class MizanHybridPipeline:
         orig_tokens = re.findall(token_pattern, original_text)
         corr_tokens = re.findall(token_pattern, corrected_text)
 
-        # MUCİZE BURADA: Eşleştirmeyi küçük harflerle yapıyoruz ki 'dr' ve 'Dr' kopmasın!
-        orig_tokens_lower = [t.lower() for t in orig_tokens]
-        corr_tokens_lower = [t.lower() for t in corr_tokens]
+        # BURASI ÇOK ÖNEMLİ: Token'ları da kendi türkçe lower fonksiyonumuzla küçültüyoruz
+        orig_tokens_lower = [self._turkish_lower(t) for t in orig_tokens]
+        corr_tokens_lower = [self._turkish_lower(t) for t in corr_tokens]
 
         matcher = SequenceMatcher(None, orig_tokens_lower, corr_tokens_lower)
         verified_corrections = []
@@ -158,10 +159,27 @@ class MizanHybridPipeline:
         for tag, i1, i2, j1, j2 in matcher.get_opcodes():
             sub_orig = orig_tokens[i1:i2]
             sub_corr = corr_tokens[j1:j2]
-            is_start = (j1 == 0) or (j1 > 0 and corr_tokens[j1 - 1] in ['.', '!', '?'])
+            
+            # CÜMLE BAŞI (Kısaltmaları atlayan) KONTROLÜ
+            is_start = False
+            if j1 == 0:
+                is_start = True
+            else:
+                abbreviations = ['dr.', 'mr.', 'mrs.', 'prof.', 'vs.', 'st.']
+                for prev_idx in range(j1 - 1, -1, -1):
+                    prev_token = corr_tokens[prev_idx]
+                    if prev_token in ['.', '!', '?']:
+                        if prev_idx > 0:
+                            combined = (corr_tokens[prev_idx-1] + prev_token).lower()
+                            if combined in abbreviations:
+                                is_start = False
+                                break
+                        is_start = True
+                        break
+                    elif re.match(r'^\w+$', prev_token): 
+                        break
 
             if tag == 'equal':
-                # Kelimeler (dr = Dr) olarak eşleşti ama aslında harf boyutları farklıysa tespit et!
                 for k in range(len(sub_orig)):
                     o = sub_orig[k]
                     c = sub_corr[k]
@@ -175,14 +193,10 @@ class MizanHybridPipeline:
                         })
 
             elif tag == 'replace':
-                # Yukarıda yazdığımız akıllı atomik bölücüyü devreye sok
                 aligned_blocks = self._align_replace_block(sub_orig, sub_corr)
-                
                 for block in aligned_blocks:
                     o = block["original"]
                     c = block["corrected"]
-                    
-                    # Noktalamalardan önceki çirkin boşlukları temizle (Örn: "Dr ." -> "Dr.")
                     o = re.sub(r'\s+([.,!?;:])', r'\1', o)
                     c = re.sub(r'\s+([.,!?;:])', r'\1', c)
                     
@@ -220,19 +234,71 @@ class MizanHybridPipeline:
         return verified_corrections
 
     def _merge_and_sort_corrections(self, regex_list, ai_list):
-        # KRONOLOJİK SIRAYI BOZMAMA VE DEDUPLICATION (GİZLEME) KALDIRILDI!
-        # Böylece metinde aynı cümle 2 kere geçerse, 2 kere listelenecek ve UI boyayabilecek.
-        
-        # Sadece Regex'ten gelen çok özel açıklamalar varsa AI listesine giydiriyoruz.
         regex_explanations = {c.get("corrected", "").lower(): c.get("explanation") for c in regex_list}
-        
         for c in ai_list:
             corr_lower = c.get("corrected", "").lower()
             if corr_lower in regex_explanations:
                 c["explanation"] = regex_explanations[corr_lower]
-                
         return ai_list
 
+    # =========================================================================
+    # BÜYÜK METİNLERİ (10.000 Karakter) PARÇALAYIP İŞLEYEN FONKSİYON
+    # =========================================================================
+    def process_large_text(self, text):
+        if len(text) < 2500:
+            return self.process(text)
+
+        print(f"📦 Devasa metin algılandı ({len(text)} karakter). Parçalama işlemi (Chunking) başlatılıyor...")
+
+        # 1. Metni Paragraflara Böl (Çift Enter veya Nokta'dan)
+        paragraphs = [p.strip() for p in text.split('\n\n') if p.strip()]
+        
+        # Eğer yazar hiç Enter'a basmamış, dümdüz 10.000 karakter yazmışsa; bu kez metni noktalardan bölüyoruz.
+        if len(paragraphs) == 1:
+            paragraphs = [p.strip() + '.' for p in text.split('. ') if p.strip()]
+
+        combined_corrected_text = []
+        combined_corrections = []
+        total_time_ms = 0
+        total_regex_count = 0
+        total_neural_count = 0
+
+        # 2. Her Bir Parçayı (Chunk) Sırayla LLM'e Gönder ve Yorulmadan İşlemesini Sağla
+        for i, chunk in enumerate(paragraphs):
+            print(f"⏳ İşleniyor: Parça {i+1}/{len(paragraphs)} ({len(chunk)} karakter)")
+            
+            # Parçayı asıl LLM motoruna gönder
+            result = self.process(chunk)
+            
+            combined_corrected_text.append(result["correctedText"])
+            combined_corrections.extend(result["corrections"])
+            
+            # Telemetri metriklerini (Geçen süre vb.) topla
+            meta = result.get("metadata", {})
+            total_time_ms += meta.get("processing_time_ms", 0)
+            total_regex_count += meta.get("regex_count", 0)
+            total_neural_count += meta.get("neural_count", 0)
+
+        # 3. Tüm Parçalar Bittiğinde Hepsini Tek Bir Metin Olarak Yeniden Birleştir
+        final_text = "\n\n".join(combined_corrected_text)
+        
+        print(f"✅ Büyük metin analizi tamamlandı! Toplam Süre: {total_time_ms}ms")
+
+        # 4. React Arayüzüne Orijinal API Formatında Dön
+        return {
+            "originalText": text,
+            "correctedText": final_text,
+            "corrections": combined_corrections,
+            "metadata": {
+                "regex_count": total_regex_count,
+                "neural_count": total_neural_count,
+                "processing_time_ms": total_time_ms,
+                "mode": "chunked_processing",
+                "chunks_processed": len(paragraphs)
+            }
+        }
+
+    # Asıl Llama 3.1 İşleme Fonksiyonu (Tekil Parçalar İçin)
     def process(self, text):
         rb_text = text
         rb_corrections = []
@@ -249,10 +315,8 @@ class MizanHybridPipeline:
         prompt_token_count = len(self.model.tokenize(prompt_bytes))
         
         max_available_space = 8192 - prompt_token_count - 50
-        needed_space = int(prompt_token_count * 1.5) + 1000
+        needed_space = int(prompt_token_count * 1.5) + 1500        
         safe_max_tokens = min(max_available_space, needed_space)
-
-        print(f"📊 Token Analizi: Girdi={prompt_token_count}, Ayrılan Çıktı Alanı={safe_max_tokens}")
 
         if max_available_space <= 100:
             print("🚨 UYARI: Metin çok uzun! LLM'in cevap yazacağı alan kalmadı.")
