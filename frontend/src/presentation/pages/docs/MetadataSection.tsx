@@ -1,5 +1,10 @@
-import { ArrowRight, Braces, Cpu, Terminal } from "lucide-react";
+import { ArrowRight, Braces, Cpu, FileText, Layers, Terminal } from "lucide-react";
+import { useState } from "react";
 import {
+    BATCH_REQUEST_EXAMPLE,
+    BATCH_REQUEST_PARAMS,
+    BATCH_RESPONSE_EXAMPLE,
+    BATCH_RESPONSE_PARAMS,
     METADATA_REQUEST,
     METADATA_RESPONSE,
     MIZAN_BASE_URL,
@@ -65,6 +70,9 @@ function ParamsTable({ params, showRequired = false }: { params: Param[]; showRe
 }
 
 export function MetadataSection() {
+    // API Modu için Tab State'i
+    const [apiMode, setApiMode] = useState<"single" | "batch">("single");
+
     return (
         <div className="w-full space-y-12 animate-in fade-in duration-500">
             
@@ -74,29 +82,55 @@ export function MetadataSection() {
                     Meta Veriler ve Şemalar
                 </h1>
                 <p className="text-lg text-muted-foreground leading-relaxed w-full">
-                    Mizan API ile analiz süreci başlatmak için kullanılan <strong>Request (İstek)</strong> ve <strong>Response (Yanıt)</strong> şemaları aşağıda teknik detaylarıyla tanımlanmıştır. Sistem, atomik tokenizasyon kuralına uygun olarak detaylı metadata döner.
+                    Mizan API ile analiz süreci başlatmak için kullanılan <strong>Request (İstek)</strong> ve <strong>Response (Yanıt)</strong> şemaları aşağıda teknik detaylarıyla tanımlanmıştır. Sistem, tekil belgeler ve çoklu satırlar (Batch) için iki ayrı uç nokta sunar.
                 </p>
             </div>
 
+            {/* API Mode Toggles (Tab Yapısı) */}
+            <div className="flex p-1 bg-muted/50 rounded-xl border border-border/50 w-fit">
+                <button
+                    onClick={() => setApiMode("single")}
+                    className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all duration-300 ${
+                        apiMode === "single"
+                            ? "bg-background text-foreground shadow-sm border border-border/50"
+                            : "text-muted-foreground hover:text-foreground"
+                    }`}
+                >
+                    <FileText size={16} />
+                    Tekil Belge Analizi
+                </button>
+                <button
+                    onClick={() => setApiMode("batch")}
+                    className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all duration-300 ${
+                        apiMode === "batch"
+                            ? "bg-background text-foreground shadow-sm border border-border/50"
+                            : "text-muted-foreground hover:text-foreground"
+                    }`}
+                >
+                    <Layers size={16} />
+                    Toplu Analiz (Batch)
+                </button>
+            </div>
+
             {/* Endpoint Alanı */}
-            <div className="space-y-4 w-full">
+            <div className="space-y-4 w-full animate-in fade-in duration-300">
                 <h2 className="text-2xl font-bold text-foreground flex items-center gap-3">
                     <Terminal size={28} className="text-destructive" />
-                    Temel Endpoint
+                    Aktif Endpoint
                 </h2>
                 <div className="inline-flex items-center gap-4 px-6 py-5 rounded-3xl bg-card border border-border shadow-sm group hover:border-destructive/30 transition-all">
                     <span className="text-[12px] font-bold px-3 py-1.5 rounded-lg bg-emerald-500 text-white shadow-sm transition-transform group-hover:scale-105 tracking-widest uppercase">POST</span>
                     <span className="text-[16px] font-mono font-bold text-foreground tracking-tight select-all">
-                        {MIZAN_BASE_URL}/analyze
+                        {MIZAN_BASE_URL}/{apiMode === "single" ? "analyze" : "batch"}
                     </span>
                 </div>
             </div>
 
             {/* İstek ve Yanıt Yan Yana (Side by Side) */}
-            <div className="space-y-6 w-full pt-4">
+            <div className="space-y-6 w-full pt-4 animate-in slide-in-from-bottom-4 duration-500">
                 <h2 className="text-2xl font-bold text-foreground flex items-center gap-3 border-b border-border pb-4">
                     <Braces size={28} className="text-destructive" />
-                    İstek ve Yanıt Yapısı
+                    İstek ve Yanıt Yapısı ({apiMode === "single" ? "Tekil" : "Toplu"})
                 </h2>
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 w-full">
                     {/* İstek */}
@@ -105,10 +139,9 @@ export function MetadataSection() {
                             <span className="text-[12px] font-bold uppercase tracking-widest text-muted-foreground group-hover:text-destructive transition-colors">İstek (Request)</span>
                             <ArrowRight size={14} className="text-muted-foreground/50 group-hover:text-destructive transition-colors group-hover:translate-x-1" />
                         </div>
-                        {/* Dış sarmalayıcıya bg-[#1e1e1e] eklendi */}
                         <div className="w-full rounded-2xl overflow-hidden bg-[#1e1e1e] border border-border shadow-inner">
                             <DocsCodeBlock
-                                code={JSON.stringify(METADATA_REQUEST, null, 2)}
+                                code={JSON.stringify(apiMode === "single" ? METADATA_REQUEST : BATCH_REQUEST_EXAMPLE, null, 2)}
                                 language="json"
                             />
                         </div>
@@ -120,7 +153,7 @@ export function MetadataSection() {
                         </div>
                         <div className="w-full rounded-2xl overflow-hidden bg-[#1e1e1e] border border-border shadow-inner">
                             <DocsCodeBlock
-                                code={JSON.stringify(METADATA_RESPONSE, null, 2)}
+                                code={JSON.stringify(apiMode === "single" ? METADATA_RESPONSE : BATCH_RESPONSE_EXAMPLE, null, 2)}
                                 language="json" 
                             />
                         </div>
@@ -128,37 +161,37 @@ export function MetadataSection() {
                 </div>
             </div>
 
-            {/* İstek Parametreleri Tablosu */}
-            <div className="space-y-5 w-full pt-4">
-                <div className="space-y-2">
-                    <h2 className="text-2xl font-bold text-foreground">İstek Parametreleri (Payload)</h2>
-                    <p className="text-[15px] text-muted-foreground leading-relaxed">
-                        Analiz motorunu yapılandırmak için JSON gövdesinde (body) aşağıdaki alanları göndermelisiniz.
-                    </p>
-                </div>
-                <ParamsTable params={REQUEST_PARAMS} showRequired />
-            </div>
-
-            {/* Yanıt Parametreleri Tablosu */}
-            <div className="space-y-5 w-full pt-4">
-                <div className="space-y-2">
-                    <h2 className="text-2xl font-bold text-foreground">Yanıt Alanları</h2>
-                    <p className="text-[15px] text-muted-foreground leading-relaxed">
-                        Analiz işlemi başarıyla sonuçlandığında dönen JSON objesinin anatomisi:
-                    </p>
-                </div>
-                <ParamsTable params={RESPONSE_PARAMS} />
-            </div>
-
             {/* Performans Metrikleri Paneli */}
             <div className="flex items-start gap-5 p-8 rounded-3xl bg-destructive/5 border border-destructive/20 transition-all hover:bg-destructive/10 group w-full">
                 <Cpu size={28} className="text-destructive shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
                 <div className="text-[15px] text-foreground leading-relaxed space-y-2 w-full">
-                    <p className="font-bold text-destructive uppercase tracking-widest text-[11px]">Sistem Metrikleri ve Telemetri</p>
+                    <p className="font-bold text-destructive uppercase tracking-widest text-[11px]">Sistem Metrikleri, Telemetri ve Chunking</p>
                     <p className="text-muted-foreground leading-relaxed">
                         Yanıttaki <code className="mx-1 px-1.5 py-0.5 rounded bg-destructive/10 text-destructive font-mono text-[13px] border border-destructive/20">metadata</code> alanı, 
-                        yapay zeka modelinin çalışmasını şeffaf bir şekilde raporlar. <code className="mx-1 font-mono text-[13px] font-bold text-foreground">regex_count</code> Kural Tabanlı (Rule-based) motorun milisaniyeler içinde yakaladığı hataları gösterirken, <code className="mx-1 font-mono text-[13px] font-bold text-foreground">neural_count</code> Llama 3.1 LLM motorunun düzelttiği derin bağlamsal hataları belirtir. Bu metriklerle Mizan hibrit mimarisinin iş yükü dağılımını izleyebilirsiniz.
+                        yapay zeka modelinin çalışmasını şeffaf bir şekilde raporlar. <code className="mx-1 font-mono text-[13px] font-bold text-foreground">regex_count</code> kural tabanlı motorun hızla düzelttiği hataları gösterirken, <code className="mx-1 font-mono text-[13px] font-bold text-foreground">neural_count</code> Llama 3.1 LLM motorunun derin analizlerini belirtir. 10.000 karaktere kadar olan metinlerde otomatik olarak devreye giren <strong>Chunking (Parçalama)</strong> detayları da bu nesnede raporlanır.
                     </p>
+                </div>
+            </div>
+
+            {/* Parametre Tabloları (Moda Göre Dinamik) */}
+            <div className="space-y-12 animate-in fade-in">
+                <div className="space-y-5 w-full pt-4">
+                    <div className="space-y-2">
+                        <h2 className="text-2xl font-bold text-foreground">İstek Parametreleri (Payload)</h2>
+                    </div>
+                    <ParamsTable 
+                        params={apiMode === "single" ? REQUEST_PARAMS : BATCH_REQUEST_PARAMS} 
+                        showRequired 
+                    />
+                </div>
+
+                <div className="space-y-5 w-full pt-4">
+                    <div className="space-y-2">
+                        <h2 className="text-2xl font-bold text-foreground">Yanıt Alanları</h2>
+                    </div>
+                    <ParamsTable 
+                        params={apiMode === "single" ? RESPONSE_PARAMS : BATCH_RESPONSE_PARAMS} 
+                    />
                 </div>
             </div>
         </div>

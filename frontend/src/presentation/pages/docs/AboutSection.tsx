@@ -56,7 +56,7 @@ export function AboutSection() {
                 </div>
                 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Hibrit Motor */}
+                    {/* Hibrit Motor & Chunking */}
                     <div className="lg:col-span-2 p-8 rounded-3xl border border-border bg-linear-to-br from-card to-muted/30 shadow-sm relative overflow-hidden group hover:border-destructive/30 transition-all">
                         <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
                             <Cpu size={120} />
@@ -67,26 +67,27 @@ export function AboutSection() {
                                 <h3 className="text-xl font-bold">Mizan Hibrit Engine</h3>
                             </div>
                             <p className="text-[15px] text-muted-foreground leading-relaxed max-w-md">
-                                Regex katmanı ile milisaniyelik hızda ön temizlik yapar, ardından Llama-3.1-8B nöral motoru ile bağlamsal hataları derinlemesine analiz eder. Noktalama ve kesme işaretlerini atomik düzeyde ayrıştırır.
+                                Regex katmanı ile ön temizlik yapar, ardından Llama-3.1-8B nöral motoru ile bağlamsal analiz gerçekleştirir. <strong>10.000 karaktere kadar olan devasa metinleri</strong> hafıza aşımı yaşatmadan otomatik parçalar (Chunking) ve birleştirir.
                             </p>
-                            <div className="flex gap-2 mt-4">
+                            <div className="flex flex-wrap gap-2 mt-4">
                                 <span className="text-[10px] font-mono bg-background border border-border px-2 py-1 rounded uppercase font-bold">Local LLM</span>
-                                <span className="text-[10px] font-mono bg-background border border-border px-2 py-1 rounded uppercase font-bold">Deterministic Regex</span>
+                                <span className="text-[10px] font-mono bg-background border border-border px-2 py-1 rounded uppercase font-bold">Regex</span>
+                                <span className="text-[10px] font-mono bg-destructive/10 text-destructive border border-destructive/20 px-2 py-1 rounded uppercase font-bold">Auto-Chunking</span>
                             </div>
                         </div>
                     </div>
 
                     {/* Toplu İşlem (Batch) */}
-                    <div className="p-8 rounded-3xl border border-border bg-card shadow-sm hover:border-destructive/30 transition-all space-y-4">
+                    <div className="p-8 rounded-3xl border border-border bg-card shadow-sm hover:border-destructive/30 transition-all space-y-4 flex flex-col">
                         <div className="flex items-center gap-3 text-destructive">
                             <Layers size={24} />
                             <h3 className="text-xl font-bold">Batch Processing</h3>
                         </div>
-                        <p className="text-[14px] text-muted-foreground leading-relaxed">
-                            Büyük ölçekli dosyalar ve veri setleri için optimize edilmiş asenkron toplu analiz yeteneği.
+                        <p className="text-[14px] text-muted-foreground leading-relaxed grow">
+                            Çoklu dosya analizi için optimize edilmiştir. Sistem sağlığı için <strong>aynı anda 5 dosya</strong> ve <strong>satır başı 500 karakter</strong> sınırı ile çalışır. İşlemler ağ seviyesinde anında iptal edilebilir.
                         </p>
                         <div className="pt-4 mt-auto">
-                            <code className="text-[12px] font-mono bg-muted px-3 py-1.5 rounded-lg text-foreground font-bold">/analyze/batch</code>
+                            <code className="text-[12px] font-mono bg-muted px-3 py-1.5 rounded-lg text-foreground font-bold border border-border/50">/analyze/batch</code>
                         </div>
                     </div>
                 </div>
@@ -101,7 +102,7 @@ export function AboutSection() {
                             Veri Standardı
                         </h3>
                         <p className="text-muted-foreground leading-relaxed text-[15px]">
-                            Mizan, tüm yanıtları standart <strong>RFC 7159</strong> uyumlu JSON formatında döndürür. Atomik tokenizasyon kuralı ile her bir hatayı <i>(dilbilgisi, terminoloji, deascii vb.)</i> ayrı bir metadata objesi olarak raporlar.
+                            Mizan, tüm yanıtları standart <strong>RFC 7159</strong> uyumlu JSON formatında döndürür. Atomik tokenizasyon kuralı ile her bir hatayı <i>(dilbilgisi, terminoloji, deascii vb.)</i> ayrı bir metadata objesi olarak raporlar. Diff algoritması ile mükemmel kelime hizalaması (alignment) sağlar.
                         </p>
                     </div>
                     <div className="space-y-4">

@@ -9,6 +9,7 @@ export function BatchAnalyzer() {
   const [error, setError] = useState("");
   const [fileQueue, setFileQueue] = useState<File[]>([]);
   const [expandedFiles, setExpandedFiles] = useState<Record<number, boolean>>({});
+  const [isDragging, setIsDragging] = useState(false); // 🖱️ Drag state
 
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -17,25 +18,52 @@ export function BatchAnalyzer() {
   const MAX_LINE_CHARACTERS = 500;
   const ALLOWED_EXTENSIONS = ['.txt', '.csv', '.md', '.srt', '.docx', '.pdf'];
 
-  const handleFilesUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = Array.from(e.target.files || []);
-    if (selectedFiles.length === 0) return;
+  // Ortak Dosya İşleme Mantığı
+  const processFiles = (files: File[]) => {
+    if (files.length === 0) return;
 
-    if (fileQueue.length + selectedFiles.length > MAX_FILES) {
+    if (fileQueue.length + files.length > MAX_FILES) {
       setError(`Aynı anda en fazla ${MAX_FILES} dosya analiz edebilirsiniz.`);
       return;
     }
 
-    const validFiles = selectedFiles.filter(f => 
+    const validFiles = files.filter(f => 
       ALLOWED_EXTENSIONS.some(ext => f.name.toLowerCase().endsWith(ext))
     );
     
-    if (validFiles.length !== selectedFiles.length) {
+    if (validFiles.length !== files.length) {
       setError("Bazı dosyalar desteklenmeyen formatta olduğu için atlandı.");
     }
 
     setFileQueue(prev => [...prev, ...validFiles]);
+    setError(""); // Yeni dosya eklenince eski hatayı temizle
+  };
+
+  const handleFilesUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = Array.from(e.target.files || []);
+    processFiles(selectedFiles);
     e.target.value = ''; 
+  };
+
+  // 🎯 SÜRÜKLE-BIRAK YÖNETİMİ
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (!isProcessing) setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    if (isProcessing) return;
+
+    const droppedFiles = Array.from(e.dataTransfer.files);
+    processFiles(droppedFiles);
   };
 
   const removeFromFileQueue = (index: number) => {
@@ -58,7 +86,6 @@ export function BatchAnalyzer() {
   };
 
   const handleBatchSubmit = async () => {
-    // 1. Ekranı Sıfırla
     setBatchResults([]);
     setExpandedFiles({});
     setError("");
@@ -67,7 +94,6 @@ export function BatchAnalyzer() {
     setIsProcessing(true);
     abortControllerRef.current = new AbortController();
 
-    // 2. Dosyaları Okumaya Çalış
     for (const file of fileQueue) {
       try {
         const text = await file.text();
@@ -87,32 +113,23 @@ export function BatchAnalyzer() {
       return;
     }
 
-    // 🚨 3. ÖN KONTROL (HATA YAKALAMA) - Hiçbir istek atmadan önce tarar
+    // ÖN KONTROL
     for (const task of tasks) {
       const lines = task.content.split("\n").map(t => t.trim()).filter(t => t.length > 0);
-      
-      // 500 karakterden uzun herhangi bir satır var mı?
       const hasOversizedLine = lines.some(line => line.length > MAX_LINE_CHARACTERS);
-      
       if (hasOversizedLine) {
-        setError(`HATA: "${task.name}" içerisinde ${MAX_LINE_CHARACTERS} karakter sınırını aşan satırlar var. Sistemin kilitlenmemesi için işlem iptal edildi. Lütfen metni kısaltarak tekrar deneyin.`);
+        setError(`HATA: "${task.name}" içerisinde ${MAX_LINE_CHARACTERS} karakter sınırını aşan satırlar var. Lütfen metni kısaltarak tekrar deneyin.`);
         setIsProcessing(false);
-        return; // 🛑 Hata bulundu, fonksiyonu anında durdur
+        return;
       }
     }
 
-    // 4. Sırayla Analiz Et (Tüm dosyalar güvenliyse burası çalışır)
     try {
       for (let i = 0; i < tasks.length; i++) {
         const task = tasks[i];
-        
         if (abortControllerRef.current.signal.aborted) break;
 
-        // Ön kontrolden geçtiği için artık sadece boşlukları siliyoruz
-        const lines = task.content.split("\n")
-          .map(t => t.trim())
-          .filter(t => t.length > 0);
-
+        const lines = task.content.split("\n").map(t => t.trim()).filter(t => t.length > 0);
         const processableLines = lines.slice(0, 50);
 
         if (processableLines.length === 0) continue;
@@ -127,15 +144,12 @@ export function BatchAnalyzer() {
         if (!response.ok) throw new Error(`${task.name} sunucuda işlenirken hata oluştu.`);
         
         const data = await response.json();
-        
-        // Frontend Diff için orijinal metinleri bağla
         const resultsWithOriginals = data.results.map((res: any, idx: number) => ({
           ...res,
           originalText: processableLines[idx]
         }));
 
         setBatchResults(prev => [...prev, { ...data, fileName: task.name, results: resultsWithOriginals }]);        
-        // Yeni tamamlanan dosyayı otomatik olarak açık (expanded) hale getir
         setExpandedFiles(prev => ({ ...prev, [i]: true }));
       }
     } catch (err: any) {
@@ -154,8 +168,23 @@ export function BatchAnalyzer() {
   return (
     <div className="w-full flex flex-col gap-6 animate-in fade-in duration-500 pb-10">
       
-      {/* KONTROL PANELİ */}
-      <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden transition-colors duration-300">
+      <div 
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        className={`bg-card border-2 rounded-2xl shadow-sm overflow-hidden transition-all duration-300 relative ${isDragging ? 'border-destructive border-dashed bg-destructive/5 scale-[1.01]' : 'border-border'}`}
+      >
+        {/* Drag Overlay */}
+        {isDragging && (
+          <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm pointer-events-none">
+            <div className="p-4 rounded-full bg-destructive/10 text-destructive animate-bounce">
+              <FileUp size={40} />
+            </div>
+            <p className="mt-4 font-black text-destructive uppercase tracking-widest text-lg">Dosyaları Buraya Bırakın</p>
+            <p className="text-xs text-muted-foreground mt-1">Maksimum {MAX_FILES} dosya ve desteklenen formatlar</p>
+          </div>
+        )}
+
         <div className="flex items-center gap-2 px-5 py-3 border-b border-border bg-muted/30">
           <LayoutGrid size={18} className="text-destructive" />
           <h3 className="font-bold text-foreground text-[15px]">Toplu Analiz Masası</h3>
@@ -174,7 +203,7 @@ export function BatchAnalyzer() {
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             disabled={isProcessing}
-            placeholder={`Metinleri buraya yapıştırın. Çok uzun satırlar (${MAX_LINE_CHARACTERS}+ karakter) içerirse sistem güvenlik amacıyla analizi durdurur...`}
+            placeholder={`Metinleri buraya yapıştırın veya dosyaları bu alana sürükleyip bırakın...`}
             className="w-full min-h-32 bg-background text-foreground border border-border rounded-xl p-4 text-[15px] focus:outline-none focus:border-destructive focus:ring-1 focus:ring-destructive transition-all shadow-inner mb-4 disabled:opacity-50"
           />
 
@@ -254,15 +283,13 @@ export function BatchAnalyzer() {
         </div>
       </div>
 
-      {/* AÇILIR-KAPANIR (ACCORDION) SONUÇ ALANI */}
+      {/* SONUÇ ALANI (ACCORDION) */}
       {batchResults.length > 0 && (
         <div className="flex flex-col gap-4 mt-2">
           {batchResults.map((batch, batchIdx) => {
             const isExpanded = expandedFiles[batchIdx];
             return (
               <div key={batchIdx} className="border border-border rounded-2xl overflow-hidden bg-card/50 transition-all duration-300 shadow-sm animate-in slide-in-from-bottom-4">
-                
-                {/* AKORDİYON BAŞLIĞI */}
                 <button 
                   onClick={() => toggleFileSection(batchIdx)}
                   className="w-full flex items-center justify-between px-6 py-4 bg-muted/20 hover:bg-muted/40 transition-colors"
@@ -286,7 +313,6 @@ export function BatchAnalyzer() {
                   </div>
                 </button>
 
-                {/* AKORDİYON İÇERİĞİ */}
                 {isExpanded && (
                   <div className="p-6 grid grid-cols-1 gap-8 border-t border-border/50">
                     {batch.results.map((resultItem: any, index: number) => (

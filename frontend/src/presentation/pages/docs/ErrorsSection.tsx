@@ -1,4 +1,4 @@
-import { FileWarning, Info, ShieldAlert, Terminal } from "lucide-react";
+import { Activity, FileWarning, Info, ShieldAlert, Terminal } from "lucide-react";
 import {
     ERROR_RESPONSE_EXAMPLE,
     HTTP_STATUS_CODES,
@@ -7,14 +7,11 @@ import {
 import { DocsCodeBlock } from "../../components/docs/DocsCodeBlock";
 
 function StatusBadge({ code }: { code: number }) {
-    // HTTP kodlarının doğasına göre akıllı renklendirme
-    let color = "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"; // 2xx Başarılı
+    let color = "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"; 
     
     if (code >= 500) {
-        // 5xx Sunucu Hataları (Örn: 503 Motor Başlatılıyor)
         color = "bg-destructive/10 text-destructive border-destructive/20";
     } else if (code >= 400) {
-        // 4xx İstemci Hataları (Örn: 403, 422, 429, 499)
         color = "bg-amber-500/10 text-amber-600 dark:text-amber-500 border-amber-500/20";
     } 
     
@@ -51,10 +48,10 @@ export function ErrorsSection() {
                     <div className="bg-card border border-border rounded-3xl p-8 flex flex-col h-full space-y-5 shadow-sm hover:border-destructive/30 transition-all group">
                         <div className="flex items-center gap-3">
                             <Terminal size={22} className="text-muted-foreground group-hover:text-destructive transition-colors" />
-                            <h3 className="text-lg font-bold text-foreground">Standart Hata (403, 429, 499, 503)</h3>
+                            <h3 className="text-lg font-bold text-foreground">Sistem Hataları (403, 429, 499, 503)</h3>
                         </div>
                         <p className="text-[14px] text-muted-foreground leading-relaxed mb-4">
-                            Genel güvenlik, işlem iptali ve motor yükleme hataları her zaman <code className="px-1.5 py-0.5 rounded bg-muted text-destructive font-mono text-[13px] border border-border">detail</code> anahtarı içeren basit bir JSON nesnesi döner.
+                            Güvenlik engelleri, hız sınırları veya motor yükleme durumlarında dönen standart hata mesajı formatıdır.
                         </p>
                         <div className="w-full rounded-xl overflow-hidden bg-[#1e1e1e] border border-border shadow-inner">
                             <DocsCodeBlock
@@ -68,10 +65,10 @@ export function ErrorsSection() {
                     <div className="bg-card border border-border rounded-3xl p-8 flex flex-col h-full space-y-5 shadow-sm hover:border-amber-500/30 transition-all group">
                         <div className="flex items-center gap-3">
                             <FileWarning size={22} className="text-muted-foreground group-hover:text-amber-500 transition-colors" />
-                            <h3 className="text-lg font-bold text-foreground">Veri Doğrulama Hatası (422)</h3>
+                            <h3 className="text-lg font-bold text-foreground">Doğrulama Hatası (422)</h3>
                         </div>
                         <p className="text-[14px] text-muted-foreground leading-relaxed mb-4">
-                            10.000 karakter sınırı aşıldığında veya geçersiz/boş bir metin gönderildiğinde, Pydantic şema motoru nerenin hatalı olduğunu gösteren detaylı bir dizi döner.
+                            Payload yapısı bozuk olduğunda veya <strong>10.000 karakter</strong> sınırı aşıldığında Pydantic motorundan dönen detaylı hata raporudur.
                         </p>
 
                         <div className="w-full rounded-xl overflow-hidden bg-[#1e1e1e] border border-border shadow-inner">
@@ -81,6 +78,19 @@ export function ErrorsSection() {
                             />
                         </div>
                     </div>
+                </div>
+            </div>
+
+            {/* Toplu İşlem Hata Mantığı (YENİ) */}
+            <div className="flex items-start gap-6 p-8 rounded-3xl border border-border bg-linear-to-r from-card to-muted/20 shadow-sm">
+                <div className="p-4 bg-blue-500/10 rounded-2xl text-blue-500 shrink-0">
+                    <Activity size={28} />
+                </div>
+                <div className="space-y-3">
+                    <h3 className="text-lg font-bold text-foreground italic uppercase tracking-tight">Toplu İşlem Hata Yaklaşımı (Batch)</h3>
+                    <p className="text-[14px] text-muted-foreground leading-relaxed">
+                        Toplu analiz (<code>/batch</code>) modunda sunucu, satırları atomik olarak işler. Bir satırda motor hatası oluşması tüm süreci durdurmaz; ilgili satır için <code>"status": "error"</code> dönerken, diğer başarılı satırlar işlenmeye devam eder (Kısmi Başarı).
+                    </p>
                 </div>
             </div>
 
@@ -122,8 +132,8 @@ export function ErrorsSection() {
                 <Info size={28} className="text-destructive shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
                 <div className="text-[15px] text-foreground leading-relaxed space-y-2">
                     <p className="font-bold text-destructive uppercase tracking-widest text-[11px]">Entegrasyon İpucu</p>
-                    <p className="text-muted-foreground">
-                        Uygulamanızda API isteklerini yönetirken HTTP durum kodlarını mutlaka yakalayın. Eğer <strong>429 (Too Many Requests)</strong> veya <strong>503 (Service Unavailable)</strong> kodu alırsanız, sistemi yormamak için isteği hemen tekrarlamak yerine <strong>üstel geri çekilme (exponential backoff)</strong> stratejisi kullanmanız önerilir.
+                    <p className="text-muted-foreground leading-relaxed">
+                        API yanıtlarında <strong>499 (Client Closed Request)</strong> kodu alıyorsanız, bu genellikle istemci tarafındaki <code>AbortController</code>'ın ağ isteğini kestiğini gösterir. Bu bir hata değil, kaynak tasarrufu için tasarlanmış bir kontrol mekanizmasıdır.
                     </p>
                 </div>
             </div>
