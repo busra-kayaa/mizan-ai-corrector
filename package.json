@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "diff": "^9.0.0"
+  },
+  "devDependencies": {
+    "@types/diff": "^7.0.2"
+  }
+}

@@ -1,3 +1,4 @@
+import { diffWordsWithSpace } from "diff";
 import { ArrowRight, CheckCircle2, ChevronDown, ChevronUp, Clock, Copy, List, ThumbsDown, ThumbsUp, X, Zap } from "lucide-react";
 import { useState } from "react";
 import { AnalysisResponse, Correction } from "../../domain/entities/Analysis";
@@ -35,7 +36,7 @@ const formatTime = (ms: number) => {
   return `${minutes} dk ${seconds} sn`;
 };
 
-export function AnalysisResult({ correctedText, corrections = [], timestamp, metadata, hideDetails = false }: AnalysisResultProps) {
+export function AnalysisResult({ originalText, correctedText, corrections = [], timestamp, metadata, hideDetails = false }: AnalysisResultProps) {
   const [copied, setCopied] = useState(false);
   const [userFeedback, setUserFeedback] = useState<'up' | 'down' | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -80,45 +81,28 @@ export function AnalysisResult({ correctedText, corrections = [], timestamp, met
   };
 
   const renderHighlightedText = () => {
-    if (!corrections || corrections.length === 0) return <span>{correctedText}</span>;
+      // Eğer orijinal metin bileşene gelmemişse düz metni göster
+      if (!originalText || !correctedText) return <span>{correctedText}</span>;
 
-    const elements: React.ReactNode[] = [];
-    let remainingText = correctedText;
-    let elementKey = 0;
+      // Mucize burada: Kütüphane eski metinle yeni metni kelime kelime karşılaştırır
+      const diffs = diffWordsWithSpace(originalText, correctedText);
 
-    const activeCorrections = corrections.filter(
-      (c) => c.corrected && c.corrected.trim() !== "" && !c.corrected.includes("[Silindi]")
-    );
-
-    activeCorrections.forEach((correction) => {
-      const target = correction.corrected;
-      const targetLower = target.toLowerCase();
-      const remainingLower = remainingText.toLowerCase();
-      const targetIndex = remainingLower.indexOf(targetLower);
-
-      if (targetIndex !== -1) {
-        if (targetIndex > 0) {
-          elements.push(<span key={elementKey++}>{remainingText.substring(0, targetIndex)}</span>);
+      return diffs.map((part, index) => {
+        // Eğer LLM bu kelimeyi/noktayı YENİ EKLEDİYSE (düzelttiyse) kırmızıya boya
+        if (part.added) {
+          return (
+            <span key={index} className="text-destructive font-bold bg-destructive/10 px-0.5 rounded-sm transition-colors">
+              {part.value}
+            </span>
+          );
         }
-
-        const matchedText = remainingText.substring(targetIndex, targetIndex + target.length);
-
-        elements.push(
-          <span key={elementKey++} className="text-destructive font-bold bg-destructive/10 px-0.5 rounded-sm transition-colors">
-            {matchedText}
-          </span>
-        );
-
-        remainingText = remainingText.substring(targetIndex + target.length);
-      }
-    });
-
-    if (remainingText) {
-      elements.push(<span key={elementKey++}>{remainingText}</span>);
-    }
-
-    return elements;
-  };
+        // Orijinal metinden SİLİNEN (bozuk) şeyleri ekrana basma
+        if (!part.removed) {
+          return <span key={index}>{part.value}</span>;
+        }
+        return null;
+      });
+    };
 
   return (
     <div className="flex flex-col gap-6 w-full animate-in fade-in duration-500 pb-4">
