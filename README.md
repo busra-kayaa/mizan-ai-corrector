@@ -8,7 +8,7 @@
 
 **Mizan**, İngilizce metinler için geliştirilmiş, deterministik kural tabanlı algoritmalar ile **Llama 3.1** nöral ağlarını birleştiren yüksek performanslı hibrit bir metin normalizasyon ve düzeltme ekosistemidir. 
 
-**TRT Bilgi Teknolojileri Dairesi Başkanlığı** standartları çerçevesinde prototiplenen bu sistem; kurumsal terminolojiyi korurken, dilbilgisi ve yazım hatalarını sıfıra yakın hata payıyla atomik düzeyde analiz eder.
+*Not: Bu proje, **TRT Bilgi Teknolojileri Dairesi Başkanlığı**'ndaki uzun dönem stajım sırasında, kurum standartları ve ihtiyaçları gözetilerek **bireysel olarak geliştirdiğim** bir projedir; TRT'nin resmi bir kurumsal ürünü veya resmi projesi değildir.* Kurumsal terminolojiyi korurken, dilbilgisi ve yazım hatalarını sıfıra yakın hata payıyla atomik düzeyde analiz eder.
 
 ---
 
